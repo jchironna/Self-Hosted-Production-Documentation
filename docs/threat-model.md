@@ -13,6 +13,7 @@ whom, and what risk is knowingly accepted.
 | Host and service credentials | — | **Severe — enables all of the above** | — |
 | Identity provider account (SSO) | — | **Severe — fronts every published service** | Medium |
 | Household network availability | — | — | Medium |
+| Domain and mailbox | High — public identity | Medium | **High — published on resume** |
 
 The photo library and the SSO account drive most decisions. Media is explicitly low-value and
 does not get to consume controls that matter elsewhere.
@@ -45,7 +46,17 @@ it faithfully preserves the encrypted state.
 **6. Compromise of an internet-exposed game server** — *situational.*
 Certain games require a genuine inbound port. See accepted risk.
 
-**7. Physical / environmental** — *low likelihood, total impact.*
+**7. Spoofing of the owned domain** — *primary, newly introduced.*
+The domain now carries a published email address that people trust. Without enforced email
+authentication, anyone can send mail appearing to come from it — to recruiters, contacts, or
+the owner. Defeated by SPF, DKIM, and DMARC at enforcement, not by anything on the network.
+
+**8. Domain registration lapse** — *low likelihood, high consequence.*
+A lapsed registration can be re-registered by anyone, who then receives all mail to the domain.
+Bounded deliberately: the address is not a recovery email for any other account, so a lapse
+misdirects correspondence rather than enabling takeover of other accounts.
+
+**9. Physical / environmental** — *low likelihood, total impact.*
 Fire, theft, or failure exceeding single-parity tolerance.
 
 Out of scope: targeted attack by a well-resourced adversary; insider threat. Neither is
@@ -59,9 +70,13 @@ realistic for a household, and defending against them would be disproportionate.
 | IdP credential compromise | Hardware-key MFA on the SSO account | Session token theft post-authentication |
 | Service token leakage | Scoped tokens, defined rotation interval | **Rotation is manual; no automated expiry** |
 | Container compromise | Per-stack network isolation, least-privilege runtime | Shared kernel; escape reaches flat LAN |
+| Undetected compromise | Host-based monitoring, off-host alerting on high-severity events | Low-severity events exist only on the monitored host |
 | Ransomware | Versioned offsite copy with immutability | *In progress — see roadmap* |
 | Game server compromise | Source-IP allowlist, time-boxed exposure | **Flat LAN — no containment after access** |
 | Physical loss | Encrypted offsite copy | *In progress — see roadmap* |
+| Domain spoofing | SPF, DKIM, DMARC at `p=reject` | Policy set by provider; no visibility into attempts |
+| Mailbox compromise | MFA on account, per-device app passwords | **IMAP cannot enforce MFA**; domain-based account reset may bypass MFA — under review |
+| Registration lapse | Auto-renew, registrar MFA; not used for recovery | Misdirected correspondence |
 
 ## Accepted risk
 
@@ -90,6 +105,23 @@ can observe plaintext for published routes — including the notes-sync database
 Cloudflare's own compromise is outside the modelled adversary set, and the alternative
 (mesh-only access for the notes database) meaningfully degrades mobile sync. Revisit if a
 private-network path for the mobile client becomes practical.
+
+**The monitor runs on the monitored host.** The SIEM is hosted on the machine it observes, so a
+compromise of that host compromises the evidence. Dedicated monitoring hardware is not
+proportionate at this scale. Mitigated by pushing high-severity alerts off-host at the moment
+they fire, so suppression after the fact cannot erase them. Residual: anything generating only
+low-severity events leaves evidence solely on the compromised host. See
+[control 06](controls/06-monitoring-and-detection.md).
+
+**Identity linked to the infrastructure domain.** The published email address sits on the same
+domain as the published services, so anyone holding the resume can find the environment in two
+steps. Certificate transparency already exposed the subdomains, so nothing secret is revealed.
+Accepted because no route is reachable unauthenticated. See
+[control 08](controls/08-email.md).
+
+**DNS provider concentration, deepened.** The same account now controls ingress, access policy,
+and mail routing. Its compromise could silently redirect mail as well as traffic. Mitigated by
+MFA on that account; accepted as the cost of a single coherent configuration plane.
 
 **Single DNS resolver.** Pi-hole is a single point of failure for name resolution. Accepted —
 failure is an availability event, not a security one, and recovery is trivial.
