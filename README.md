@@ -20,6 +20,7 @@ Documentation for a self-hosted environment I design, operate, and secure. Organ
 | **Public ingress** | Cloudflare Tunnel + Cloudflare Access (SSO, service tokens, geo-restriction) |
 | **Administrative access** | Tailscale / WireGuard mesh |
 | **DNS** | Pi-hole, network-wide, sole resolver |
+| **Email** | Third-party hosted, on the owned domain |
 | **Workloads** | ~15 containers across four isolated Docker networks |
 
 ---
@@ -87,6 +88,7 @@ reachable only across the WireGuard mesh.
 | [05](docs/controls/05-backup-and-recovery.md) | Parity, versioned immutable offsite copy | Hardware failure, deletion, ransomware | In progress |
 | [06](docs/controls/06-monitoring-and-detection.md) | Log aggregation, off-host alerting | Undetected compromise | Partial |
 | [07](docs/controls/07-vulnerability-management.md) | Package inventory against CVE feed | Exploitation of known vulnerabilities | Partial |
+| [08](docs/controls/08-email.md) | Domain email authentication, account security | Domain spoofing, mailbox compromise | Partial |
 
 - [Threat model](docs/threat-model.md) — assets, adversaries, coverage, accepted risk
 - [Roadmap](docs/roadmap.md) — open gaps, prioritized
